@@ -1,0 +1,50 @@
+{
+  "appName": {
+    "message": "鼠标悬停翻译 Lite"
+  },
+  "appDesc": {
+    "message": "将鼠标悬停在文字上即可即时翻译"
+  },
+  "Translate_From": {
+    "message": "源语言"
+  },
+  "Translate_Into": {
+    "message": "目标语言"
+  },
+  "Translator_Engine": {
+    "message": "翻译引擎"
+  },
+  "Translate_When": {
+    "message": "翻译触发方式"
+  },
+  "Mouseover_Text_Type": {
+    "message": "悬停文本类型"
+  },
+  "Show_Tooltip_When": {
+    "message": "显示提示框条件"
+  },
+  "Tooltip_Font_Size": {
+    "message": "提示框字体大小"
+  },
+  "Tooltip_Width": {
+    "message": "提示框宽度"
+  },
+  "Tooltip_Position": {
+    "message": "提示框位置"
+  },
+  "Tooltip_Show_Delay": {
+    "message": "显示延迟"
+  },
+  "Exclude_Language": {
+    "message": "排除语言"
+  },
+  "Exclude_Website": {
+    "message": "排除网站"
+  },
+  "Bing_API_Key": {
+    "message": "Bing API 密钥"
+  },
+  "Bing_Region": {
+    "message": "Bing 区域"
+  }
+}

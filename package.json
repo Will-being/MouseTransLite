@@ -1,0 +1,32 @@
+{
+  "name": "mouse_tooltip_translator_lite",
+  "version": "1.0.0",
+  "description": "Mouse hover to translate - Lite version",
+  "private": true,
+  "scripts": {
+    "watch": "webpack --mode=development --watch --config config/webpack.config.js",
+    "build": "webpack --mode=production --config config/webpack.config.js",
+    "delete": "del-cli --force ./build",
+    "zip": "npm-build-zip",
+    "build-zip": "npm run delete && npm run build && npm run zip"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.27.2",
+    "babel-loader": "^9.2.1",
+    "copy-webpack-plugin": "^6.4.1",
+    "css-loader": "^5.2.7",
+    "del-cli": "^5.0.0",
+    "mini-css-extract-plugin": "^0.10.1",
+    "npm-build-zip": "^1.0.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "ky": "^1.0.1",
+    "lodash": "^4.17.21",
+    "match-url-wildcard": "^0.0.5",
+    "tippy.js": "^6.3.7",
+    "webextension-polyfill": "^0.10.0"
+  }
+}

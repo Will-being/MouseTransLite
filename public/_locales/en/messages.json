@@ -1,0 +1,47 @@
+{
+  "appName": {
+    "message": "Mouse Tooltip Translator Lite"
+  },
+  "appDesc": {
+    "message": "Hover over text to translate it instantly"
+  },
+  "Translate_From": {
+    "message": "Translate From"
+  },
+  "Translate_Into": {
+    "message": "Translate Into"
+  },
+  "Translator_Engine": {
+    "message": "Translation Engine"
+  },
+  "Translate_When": {
+    "message": "Translate When"
+  },
+  "Mouseover_Text_Type": {
+    "message": "Mouseover Text Type"
+  },
+  "Show_Tooltip_When": {
+    "message": "Show Tooltip When"
+  },
+  "Tooltip_Font_Size": {
+    "message": "Tooltip Font Size"
+  },
+  "Tooltip_Width": {
+    "message": "Tooltip Width"
+  },
+  "Tooltip_Position": {
+    "message": "Tooltip Position"
+  },
+  "Exclude_Language": {
+    "message": "Exclude Languages"
+  },
+  "Exclude_Website": {
+    "message": "Exclude Websites"
+  },
+  "Bing_API_Key": {
+    "message": "Bing API Key"
+  },
+  "Bing_Region": {
+    "message": "Bing Region"
+  }
+}
