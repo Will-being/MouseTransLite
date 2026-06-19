@@ -1,145 +1,149 @@
-# Mouse Tooltip Translator Lite
+<p align="center">
+  <img src="public/icons/icon_128.png" alt="Mouse Tooltip Translator Lite" width="128">
+</p>
 
-精简版鼠标悬停翻译浏览器扩展。
+<h1 align="center">Mouse Tooltip Translator Lite</h1>
 
-## 功能特性
+<p align="center">
+  Hover or select text on a web page and see the translation in a lightweight tooltip.
+</p>
 
-- **鼠标悬停翻译**：将鼠标悬停在文字上即可显示翻译
-- **文本选择翻译**：选中文字后自动翻译
-- **多种检测模式**：单词或句子级别的翻译
-- **翻译引擎**：
-  - **Google 翻译**（默认，免费无需设置）
-  - **Bing 翻译**（需要免费 API Key，每月 200 万字符）
-- **可自定义**：
-  - 源语言和目标语言
-  - 提示框字体大小和宽度
-  - 提示框位置（跟随鼠标或固定）
-  - 显示延迟时间
-  - 网站排除列表
+<p align="center">
+  English | <a href="README.zh-CN.md">简体中文</a> | <a href="README.zh-TW.md">繁體中文</a>
+</p>
 
-## 快速开始
+<p align="center">
+  <img alt="Manifest V3" src="https://img.shields.io/badge/Manifest-V3-4285F4">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-2ea44f">
+  <img alt="Private package" src="https://img.shields.io/badge/npm-private-lightgrey">
+</p>
 
-### 安装
+## Overview
 
-1. 安装依赖：
+Mouse Tooltip Translator Lite is a lightweight browser extension for translating foreign-language text while reading web pages. It injects a content script into the page, detects hovered or selected text, sends the text to the configured translation service, and displays the result in a small tooltip.
+
+This version focuses on the core translation workflow and more cautious privacy defaults. The old Vue settings page has been removed, and the extension settings UI is kept as a simple WebExtension popup.
+
+## Features
+
+- Supports mouse-hover translation, selected-text translation, or both at the same time.
+- Supports word-level or sentence-level hover text detection.
+- Uses Google Translate by default without extra configuration.
+- Supports Microsoft Translator with a user-provided API key and optional region.
+- Configurable source language, target language, trigger mode, tooltip size, display delay, and excluded websites.
+- Excludes common sensitive sites by default, including banking, email, SSO, password manager, and enterprise application domains.
+- Redacts common sensitive values before translation requests, including URLs, email addresses, phone numbers, ID numbers, passwords, API keys, and tokens.
+- Production code does not output translation text or API keys to console logs.
+
+## Privacy Notes
+
+The extension requests broad host permissions because hover translation needs to run on arbitrary web pages. To reduce the risk of accidentally sending sensitive content, the project provides two layers of protection:
+
+1. Default sensitive-site exclusions: stop the content script runtime logic on known private pages.
+2. Text redaction: replace common sensitive formats before sending translation requests.
+
+These protections are rule-based. They can reduce risk, but they cannot identify every private phrase or confidential document. For important systems, add the corresponding sites to **Exclude Websites** first.
+
+## Translation Services
+
+### Google Translate
+
+Google is the default translation service and does not require local configuration.
+
+### Microsoft Translator
+
+Microsoft Translator requires an Azure Translator API Key. Some Azure resources also require `Ocp-Apim-Subscription-Region`; the popup provides an optional **Bing Region** field.
+
+The API key is stored in extension local storage. When settings are exported, the key is redacted as `[REDACTED]`.
+
+## Quick Start
+
 ```bash
 npm install
-```
-
-2. 构建扩展：
-```bash
 npm run build
 ```
 
-3. 在浏览器中加载：
-   - Chrome/Edge: 打开 `chrome://extensions/`，启用开发者模式，点击"加载已解压的扩展程序"，选择 `build` 文件夹
-   - Firefox: 打开 `about:debugging#/runtime/this-firefox`，点击"临时加载附加组件"，选择 `build/manifest.json`
+Then load the generated `build` directory into the browser as an unpacked extension.
 
-### 使用
+### Chrome / Edge
 
-1. **使用 Google 翻译**（推荐）
-   - 点击扩展图标打开设置
-   - Translation Engine 选择 "Google Translate"（默认）
-   - 立即可用，无需配置
+1. Open `chrome://extensions/` or `edge://extensions/`.
+2. Enable developer mode.
+3. Click **Load unpacked**.
+4. Select the `build` directory.
 
-2. **使用 Bing 翻译**
-   - 点击扩展图标打开设置
-   - Translation Engine 选择 "Bing Translator"
-   - 点击 "Get Free API Key" 获取免费 API Key
-   - 输入 API Key 并保存
-   - 免费额度：每月 200 万字符
+### Firefox
 
-3. **翻译文本**
-   - 将鼠标悬停在任意文本上
-   - 或选中文本
-   - 自动显示翻译结果
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on**.
+3. Select `build/manifest.json`.
 
-## 开发
+## Usage
 
-### 开发模式
+1. Click the extension icon to open settings.
+2. Choose the source language and target language.
+3. Choose **Google Translate** or **Bing Translator**.
+4. Hover over text or select text on a web page.
+5. The translation result appears in a tooltip near the text.
+
+Common settings:
+
+- **Translate When**: mouse hover, selected text, or both.
+- **Text Detection Type**: detect by word or sentence.
+- **Show Delay**: trigger delay for hover translation.
+- **Exclude Websites**: one domain or wildcard rule per line.
+
+Example exclude rules:
+
+```text
+mail.example.com
+*.internal.example.com
+*.github.com/settings/*
+```
+
+## Development
 
 ```bash
 npm run watch
 ```
 
-### 构建生产版本
+Build the production version:
 
 ```bash
 npm run build
 ```
 
-### 热重载
+Build and generate a zip package:
 
-修改代码后，在浏览器扩展页面点击"重新加载"按钮。
+```bash
+npm run build-zip
+```
 
-## 文档
+Webpack entries:
 
-- [README.md](README.md) - 项目说明（本文档）
-- [LOGIC_BUGS.md](LOGIC_BUGS.md) - 逻辑漏洞分析和修复建议
-- [BUGFIX_LOGIC_BUGS.md](BUGFIX_LOGIC_BUGS.md) - 逻辑漏洞修复报告
-- [BING_SOLUTION_ANALYSIS.md](BING_SOLUTION_ANALYSIS.md) - Bing 翻译方案分析
-- [BUGFIX_BING_OFFICIAL_API.md](BUGFIX_BING_OFFICIAL_API.md) - Bing 官方 API 修复报告
+- `src/background.js`
+- `src/contentScript.js`
+- `src/popup.js`
 
-## 已修复的问题
+Static extension assets are in `public/` and are copied to `build/` during bundling.
 
-### 逻辑漏洞修复（2026-06-16）
+## Project Structure
 
-✅ 修复了 6 个高优先级和中优先级问题：
-1. 点击事件破坏 interactive 模式
-2. prevTooltipText 智能去重
-3. Google 翻译空结果返回原文
-4. popup 硬编码覆盖设置
-5. Background 未处理未知消息类型
-6. 删除 waitJquery 死代码
+```text
+config/                 Webpack configuration
+public/                 Manifest, popup HTML, icons, localization files
+src/background.js       Extension service worker
+src/contentScript.js    In-page tooltip runtime
+src/event/              Mouse hover and selected-text detection
+src/popup.js            Settings popup logic
+src/translator/         Translation service adapters
+src/util/               Settings, language, DOM, and text utilities
+```
 
-详见：[BUGFIX_LOGIC_BUGS.md](BUGFIX_LOGIC_BUGS.md)
+## Acknowledgments
 
-### Bing 翻译器修复（2026-06-16）
+This project is a simplified version of [MouseTooltipTranslator](https://github.com/ttop32/MouseTooltipTranslator). This repository continues that direction and focuses on a smaller Manifest V3 extension implementation.
 
-✅ 从爬虫 token 方案迁移到官方 Microsoft Translator API：
-- 使用官方 API（稳定可靠）
-- 支持免费 API Key（每月 200 万字符）
-- 添加用户友好的设置界面
-- 详细的帮助文档
+## **License**
 
-详见：[BUGFIX_BING_OFFICIAL_API.md](BUGFIX_BING_OFFICIAL_API.md)
-
-## 常见问题
-
-### Q: Bing 翻译不工作？
-
-A: Bing 翻译现在需要免费的 API Key：
-1. 点击扩展设置中的 "Get Free API Key"
-2. 在 Azure Portal 创建 Translator 资源（Free F0 tier）
-3. 复制 API Key 粘贴到设置中
-4. 免费额度：每月 200 万字符
-
-或者切换到 Google 翻译（无需设置）。
-
-### Q: 如何切换翻译引擎？
-
-A: 点击扩展图标 → Translation Engine → 选择 Google 或 Bing
-
-### Q: 如何排除某些网站？
-
-A: 点击扩展图标 → Exclude Websites → 输入网站模式（如 `*.example.com`）
-
-### Q: 翻译速度慢？
-
-A: 
-- Google 翻译通常更快
-- 检查网络连接
-- 减少 Show Delay 时间
-
-## 原项目
-
-本项目是 [MouseTooltipTranslator](https://github.com/ttop32/MouseTooltipTranslator) 的精简版本，只保留了核心的鼠标悬停翻译功能。
-
-## 许可证
-
-MIT License
-
----
-
-**当前版本**: 1.0.0  
-**最后更新**: 2026-06-16
+MIT.
