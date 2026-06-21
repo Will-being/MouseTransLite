@@ -1,6 +1,6 @@
 {
   "name": "mouse_tooltip_translator_lite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mouse hover to translate - Lite version",
   "private": true,
   "scripts": {
@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "ky": "^1.0.1",
-    "lodash": "^4.17.21",
     "match-url-wildcard": "^0.0.5",
     "tippy.js": "^6.3.7",
     "webextension-polyfill": "^0.10.0"

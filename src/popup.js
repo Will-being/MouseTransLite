@@ -26,6 +26,13 @@ import { createDefaultData } from "./util/setting_default.js";
       document.getElementById('bingApiKey').value = settings.bingApiKey || '';
       document.getElementById('bingRegion').value = settings.bingRegion || '';
 
+      // Advanced fields
+      document.getElementById('showTooltipWhen').value = settings.showTooltipWhen || 'always';
+      document.getElementById('tooltipPosition').value = settings.tooltipPosition || 'follow';
+      document.getElementById('tooltipWidth').value = settings.tooltipWidth || '300';
+      document.getElementById('langExcludeList').value =
+        Array.isArray(settings.langExcludeList) ? settings.langExcludeList.join(', ') : '';
+
       // Handle exclude list
       const excludeList = settings.websiteExcludeList || [];
       document.getElementById('websiteExcludeList').value = excludeList.join('\n');
@@ -52,12 +59,12 @@ import { createDefaultData } from "./util/setting_default.js";
         .map(s => s.trim())
         .filter(s => s.length > 0);
 
-      // Preserve existing advanced settings that are not in the UI
-      const existing = await browser.storage.local.get([
-        'showTooltipWhen',
-        'tooltipWidth',
-        'tooltipPosition'
-      ]);
+      // Parse comma-separated language exclusion list into a clean array
+      const langExcludeRaw = document.getElementById('langExcludeList').value;
+      const langExcludeList = langExcludeRaw
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
 
       const settings = {
         translateSource: document.getElementById('translateSource').value,
@@ -70,10 +77,11 @@ import { createDefaultData } from "./util/setting_default.js";
         websiteExcludeList: excludeList,
         bingApiKey: document.getElementById('bingApiKey').value.trim(),
         bingRegion: document.getElementById('bingRegion').value.trim(),
-        // Preserve existing values instead of hardcoding
-        showTooltipWhen: existing.showTooltipWhen || 'always',
-        tooltipWidth: existing.tooltipWidth || '300',
-        tooltipPosition: existing.tooltipPosition || 'follow'
+        // Advanced settings (now exposed in the UI)
+        showTooltipWhen: document.getElementById('showTooltipWhen').value,
+        tooltipPosition: document.getElementById('tooltipPosition').value,
+        tooltipWidth: document.getElementById('tooltipWidth').value.trim() || '300',
+        langExcludeList: langExcludeList
       };
 
       await browser.storage.local.set(settings);

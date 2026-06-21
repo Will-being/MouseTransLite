@@ -1,4 +1,4 @@
-﻿// Request utilities - send messages to background script
+// Request utilities - send messages to background script
 import browser from "webextension-polyfill";
 
 export async function sendMessage(message) {
@@ -25,14 +25,3 @@ export async function requestTranslate(text, sourceLang, targetLang) {
     };
   }
 }
-
-export function extractTextFromRange(range) {
-  if (!range) return "";
-  try {
-    return range.toString().trim();
-  } catch (error) {
-    return "";
-  }
-}
-
-

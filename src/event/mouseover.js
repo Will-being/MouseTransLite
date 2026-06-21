@@ -1,5 +1,5 @@
 ﻿// Mouseover text detection using range
-import { debounce } from "lodash";
+import { debounce } from "../util/debounce.js";
 import * as util from "../util/index.js";
 
 let clientX = 0;

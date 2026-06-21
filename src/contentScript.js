@@ -1,12 +1,12 @@
-﻿// Main content script - mouseover translation tooltip with debug logging
+// Main content script - mouseover translation tooltip with debug logging
 import tippy, { hideAll } from "tippy.js";
 import matchUrl from "match-url-wildcard";
 import browser from "webextension-polyfill";
-import { debounce } from "lodash";
+import { debounce } from "./util/debounce.js";
 import TextUtil from "./util/text_util.js";
 import SettingUtil from "./util/setting_util.js";
-import { defaultData } from "./util/setting_default.js";
-import { getRtlDir } from "./util/lang.js";
+import { applySettingChanges } from "./util/setting_util.js";
+import { getRtlDir, isSameLanguage } from "./util/lang.js";
 import {
   enableSelectionEndEvent,
   getSelectionRange,
@@ -82,17 +82,7 @@ function handleSettingChanged(changes, areaName) {
     return;
   }
 
-  for (const [key, change] of Object.entries(changes)) {
-    if (!Object.prototype.hasOwnProperty.call(defaultData, key)) {
-      delete setting[key];
-      continue;
-    }
-
-    setting[key] = Object.prototype.hasOwnProperty.call(change, "newValue")
-      ? change.newValue
-      : (Array.isArray(defaultData[key]) ? [...defaultData[key]] : defaultData[key]);
-  }
-
+  applySettingChanges(setting, changes);
   reloadRuntimeFromSettings();
 }
 function reloadRuntimeFromSettings() {
@@ -491,34 +481,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function isSameLanguage(lang1, lang2) {
-  if (!lang1 || !lang2) return false;
-
-  const n1 = normalizeLanguageCode(lang1);
-  const n2 = normalizeLanguageCode(lang2);
-
-  return n1 === n2;
-}
-
-function normalizeLanguageCode(lang) {
-  const lower = String(lang).toLowerCase();
-  const languageMap = {
-    "zh": "zh-cn",
-    "zh-hans": "zh-cn",
-    "zh-hant": "zh-tw",
-    "zh-cn": "zh-cn",
-    "zh-sg": "zh-cn",
-    "zh-tw": "zh-tw",
-    "zh-hk": "zh-tw",
-    "zh-mo": "zh-tw",
-  };
-
-  if (languageMap[lower]) {
-    return languageMap[lower];
-  }
-
-  return lower.split("-")[0];
-}
 function showTooltip(content, range) {
   if (!tooltip || !content) {
     return;
@@ -573,11 +535,3 @@ function handleKeyUp(e) {
 }
 
 log("ContentScript loaded");
-
-
-
-
-
-
-
-

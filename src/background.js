@@ -2,7 +2,8 @@
 import browser from "webextension-polyfill";
 import { translate } from "./translator/translateCaller.js";
 import SettingUtil from "./util/setting_util.js";
-import { createDefaultData, defaultData } from "./util/setting_default.js";
+import { applySettingChanges } from "./util/setting_util.js";
+import { createDefaultData } from "./util/setting_default.js";
 
 let setting;
 
@@ -20,27 +21,13 @@ async function getSetting() {
   setting = await SettingUtil.loadSetting();
 }
 
-function applySettingChanges(changes) {
-  if (!setting) {
-    setting = createDefaultData();
-  }
-
-  for (const [key, change] of Object.entries(changes)) {
-    if (!Object.prototype.hasOwnProperty.call(defaultData, key)) {
-      delete setting[key];
-      continue;
-    }
-
-    setting[key] = Object.prototype.hasOwnProperty.call(change, "newValue")
-      ? change.newValue
-      : (Array.isArray(defaultData[key]) ? [...defaultData[key]] : defaultData[key]);
-  }
-}
-
 function addStorageChangeListener() {
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "local") {
-      applySettingChanges(changes);
+      if (!setting) {
+        setting = createDefaultData();
+      }
+      applySettingChanges(setting, changes);
     }
   });
 }

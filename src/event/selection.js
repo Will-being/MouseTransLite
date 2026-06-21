@@ -1,5 +1,5 @@
 ﻿// Text selection detection
-import { debounce } from "lodash";
+import { debounce } from "../util/debounce.js";
 
 let textDetectTime = 300;
 

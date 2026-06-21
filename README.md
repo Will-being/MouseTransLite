@@ -14,7 +14,7 @@
 
 <p align="center">
   <img alt="Manifest V3" src="https://img.shields.io/badge/Manifest-V3-4285F4">
-  <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-2ea44f">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.0.1-2ea44f">
   <img alt="Private package" src="https://img.shields.io/badge/npm-private-lightgrey">
 </p>
 

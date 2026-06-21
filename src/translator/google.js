@@ -1,4 +1,4 @@
-﻿import ky from "ky";
+import ky from "ky";
 import BaseTranslator from "./baseTranslator.js";
 
 const API_ENDPOINTS = [
@@ -19,7 +19,7 @@ export default class Google extends BaseTranslator {
         hl: targetLang,
       }).toString() + "&dt=rm&dt=bd&dt=t";
 
-    let lastError = null;
+    const endpointErrors = [];
     for (const apiUrl of API_ENDPOINTS) {
       try {
         return await ky(`${apiUrl}?${params}`, {
@@ -31,11 +31,11 @@ export default class Google extends BaseTranslator {
           }
         }).json();
       } catch (error) {
-        lastError = error;
+        endpointErrors.push(`${apiUrl}: ${error?.message || "Unknown error"}`);
       }
     }
 
-    throw new Error(`Google Translate API failed: ${lastError?.message || "Unknown error"}`);
+    throw new Error(`Google Translate API failed: ${endpointErrors.join("; ")}`);
   }
 
   static async wrapResponse(res, text, sourceLang, targetLang) {

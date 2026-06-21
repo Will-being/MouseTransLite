@@ -1,5 +1,28 @@
-﻿import browser from "webextension-polyfill";
+import browser from "webextension-polyfill";
 import { createDefaultData, defaultData, settingDict } from "./setting_default.js";
+import { normalizeLanguageCode } from "./lang.js";
+
+// Apply storage change entries onto a live setting object in place.
+// Shared by background.js and contentScript.js to keep their
+// storage.onChanged handling identical.
+export function applySettingChanges(setting, changes) {
+  if (!setting) {
+    return setting;
+  }
+
+  for (const [key, change] of Object.entries(changes)) {
+    if (!Object.prototype.hasOwnProperty.call(defaultData, key)) {
+      delete setting[key];
+      continue;
+    }
+
+    setting[key] = Object.prototype.hasOwnProperty.call(change, "newValue")
+      ? change.newValue
+      : (Array.isArray(defaultData[key]) ? [...defaultData[key]] : defaultData[key]);
+  }
+
+  return setting;
+}
 
 function cloneSettings(settings) {
   return Object.fromEntries(
@@ -35,10 +58,10 @@ function sanitizeArray(value, allowedValues = []) {
 }
 
 function sanitizeWebsiteExcludeList(value) {
-  return sanitizeArray([
-    ...defaultData.websiteExcludeList,
-    ...(Array.isArray(value) ? value : []),
-  ]);
+  // Respect the user's intent: do NOT re-merge defaults on every save.
+  // The defaults are written once on first install via createDefaultData();
+  // from then on, what the user edits in the popup is the final list.
+  return sanitizeArray(value);
 }
 
 export function sanitizeSettingData(settingData = {}) {
@@ -108,23 +131,8 @@ const SettingUtil = {
   },
 
   parseLocaleLang(localeLang) {
-    const langMap = {
-      "zh-CN": "zh-CN",
-      "zh-TW": "zh-TW",
-      "zh-HK": "zh-TW",
-      zh: "zh-CN",
-    };
-
-    if (langMap[localeLang]) {
-      return langMap[localeLang];
-    }
-
-    const baseLang = String(localeLang || "en").split("-")[0];
-    return baseLang || "en";
+    return normalizeLanguageCode(localeLang) || "en";
   },
 };
 
 export default SettingUtil;
-
-
-

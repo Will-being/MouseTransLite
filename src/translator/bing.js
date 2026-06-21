@@ -1,26 +1,6 @@
-﻿import ky from "ky";
+import ky from "ky";
 import BaseTranslator from "./baseTranslator.js";
-
-const BING_LANG_MAP = {
-  "zh-CN": "zh-Hans",
-  "zh-TW": "zh-Hant",
-};
-
-function toBingLang(lang) {
-  if (!lang || lang === "auto") {
-    return lang;
-  }
-
-  return BING_LANG_MAP[lang] || lang;
-}
-
-function fromBingLang(lang) {
-  const reverseMap = Object.fromEntries(
-    Object.entries(BING_LANG_MAP).map(([appLang, bingLang]) => [bingLang.toLowerCase(), appLang])
-  );
-
-  return reverseMap[String(lang).toLowerCase()] || lang;
-}
+import { fromBingLanguageCode, toBingLanguageCode } from "../util/lang.js";
 
 export default class Bing extends BaseTranslator {
   static async requestTranslate(text, sourceLang, targetLang, settings) {
@@ -33,8 +13,8 @@ export default class Bing extends BaseTranslator {
     const endpoint = "https://api.cognitive.microsofttranslator.com";
     const path = "/translate";
     const apiVersion = "3.0";
-    const bingSourceLang = toBingLang(sourceLang);
-    const bingTargetLang = toBingLang(targetLang === "auto" ? "en" : targetLang);
+    const bingSourceLang = toBingLanguageCode(sourceLang);
+    const bingTargetLang = toBingLanguageCode(targetLang === "auto" ? "en" : targetLang);
 
     const params = new URLSearchParams({
       "api-version": apiVersion,
@@ -75,7 +55,7 @@ export default class Bing extends BaseTranslator {
     }
 
     const targetText = translations[0].text;
-    const detectedLang = fromBingLang(translationObj.detectedLanguage?.language || sourceLang);
+    const detectedLang = fromBingLanguageCode(translationObj.detectedLanguage?.language || sourceLang);
 
     if (!targetText) {
       throw new Error("Empty translation text");

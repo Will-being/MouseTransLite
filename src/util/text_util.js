@@ -38,27 +38,6 @@ const TextUtil = {
     }
     return redacted;
   },
-
-  filterEmoji: function (word) {
-    return String(word || "").replace(/[\u{1F600}-\u{1F64F}]/gu, "");
-  },
-
-  filterHtmlTag: function (word) {
-    return String(word || "").replace(/<[^>]*>/g, "");
-  },
-
-  truncate: function (str, n) {
-    return str.length > n ? str.substr(0, n - 1) + "..." : str;
-  },
-
-  copyTextToClipboard: async function (text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  },
 };
 
 export default TextUtil;

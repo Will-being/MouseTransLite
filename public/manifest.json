@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "__MSG_appName__",
   "description": "__MSG_appDesc__",
   "default_locale": "en",
@@ -10,17 +10,25 @@
     "48": "icons/icon_48.png",
     "128": "icons/icon_128.png"
   },
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "<all_urls>"
   ],
   "content_scripts": [
     {
-      "js": ["contentScript.js"],
-      "css": ["tippy.css"],
+      "js": [
+        "contentScript.js"
+      ],
+      "css": [
+        "tippy.css"
+      ],
       "run_at": "document_idle",
       "all_frames": true,
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "match_about_blank": true
     }
   ],
@@ -36,4 +44,3 @@
     "page": "popup.html"
   }
 }
-
