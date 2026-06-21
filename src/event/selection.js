@@ -1,4 +1,4 @@
-﻿// Text selection detection
+// Text selection detection
 import { debounce } from "../util/debounce.js";
 
 let textDetectTime = 300;

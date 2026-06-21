@@ -1,4 +1,4 @@
-﻿// Simple popup without Vue - Pure JavaScript
+// Simple popup without Vue - Pure JavaScript
 import { createDefaultData } from "./util/setting_default.js";
 (function() {
   'use strict';

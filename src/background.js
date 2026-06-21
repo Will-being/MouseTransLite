@@ -1,4 +1,4 @@
-﻿// Background service worker
+// Background service worker
 import browser from "webextension-polyfill";
 import { translate } from "./translator/translateCaller.js";
 import SettingUtil from "./util/setting_util.js";

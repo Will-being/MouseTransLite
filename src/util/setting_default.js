@@ -1,4 +1,4 @@
-﻿import TextUtil from "./text_util.js";
+import TextUtil from "./text_util.js";
 import { langList } from "./lang.js";
 
 const langListWithAuto = TextUtil.concatJson({ Auto: "auto" }, langList);

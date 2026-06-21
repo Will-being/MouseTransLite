@@ -1,4 +1,4 @@
-﻿// Text utility functions
+// Text utility functions
 const SENSITIVE_PATTERNS = [
   { pattern: /https?:\/\/[^\s<>()"']+/gi, replacement: "[URL]" },
   { pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, replacement: "[EMAIL]" },

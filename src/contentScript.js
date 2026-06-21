@@ -1,12 +1,15 @@
-// Main content script - mouseover translation tooltip with debug logging
-import tippy, { hideAll } from "tippy.js";
-import matchUrl from "match-url-wildcard";
+// Main content script - orchestrates hover/selection translation runtime.
 import browser from "webextension-polyfill";
 import { debounce } from "./util/debounce.js";
 import TextUtil from "./util/text_util.js";
 import SettingUtil from "./util/setting_util.js";
 import { applySettingChanges } from "./util/setting_util.js";
-import { getRtlDir, isSameLanguage } from "./util/lang.js";
+import { isSameLanguage } from "./util/lang.js";
+import { isUrlExcluded } from "./util/exclusion_matcher.js";
+import {
+  createTooltipRenderer,
+  buildTooltipContent,
+} from "./tooltip/tooltip_renderer.js";
 import {
   enableSelectionEndEvent,
   getSelectionRange,
@@ -17,19 +20,17 @@ import {
 import * as util from "./util/dom.js";
 
 let setting;
-let tooltip;
-let tooltipContainer;
-let styleElement;
 let keyDownList = { always: true };
 let selectedText = "";
 let prevTooltipText = "";
-let lastTooltipContent = "";
 let activeTranslateRequestId = 0;
 let currentHoverText = "";
 let currentHoverRange = null;
 let eventCleanups = [];
 let initialized = false;
 let isExcluded = false;
+
+const tooltipRenderer = createTooltipRenderer();
 
 function log() {}
 
@@ -56,8 +57,7 @@ async function initMouseTooltipTranslator() {
       return;
     }
 
-    addElementEnv();
-    applyStyleSetting();
+    ensureTooltipRuntime();
     loadEventListener();
     initialized = true;
 
@@ -85,176 +85,35 @@ function handleSettingChanged(changes, areaName) {
   applySettingChanges(setting, changes);
   reloadRuntimeFromSettings();
 }
+
 function reloadRuntimeFromSettings() {
   activeTranslateRequestId += 1;
   prevTooltipText = "";
   currentHoverText = "";
   currentHoverRange = null;
-  hideAll();
+  tooltipRenderer.hideAll();
 
-  const shouldBeExcluded = checkExcludeUrl();
-  if (shouldBeExcluded) {
+  if (checkExcludeUrl()) {
     isExcluded = true;
     destroyTooltipRuntime();
     return;
   }
 
   isExcluded = false;
-  if (!tooltipContainer) {
-    addElementEnv();
-  }
-
-  applyStyleSetting();
+  ensureTooltipRuntime();
   loadEventListener();
   initialized = true;
 }
 
+function ensureTooltipRuntime() {
+  tooltipRenderer.ensureEnvironment(setting);
+  tooltipRenderer.applyStyle(setting);
+}
+
 function checkExcludeUrl() {
-  const currentUrl = window.location.href;
   const excludeList = setting?.["websiteExcludeList"] || [];
-
-  for (const pattern of excludeList) {
-    if (matchesExcludePattern(currentUrl, pattern)) {
-      log("URL excluded by pattern:", pattern);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function matchesExcludePattern(currentUrl, pattern) {
-  const normalizedPattern = String(pattern || "").trim().toLowerCase();
-  if (!normalizedPattern) {
-    return false;
-  }
-
-  try {
-    if (matchUrl(currentUrl, normalizedPattern)) {
-      return true;
-    }
-  } catch (error) {
-    log("Exclude pattern match error:", error);
-  }
-
-  let url;
-  try {
-    url = new URL(currentUrl);
-  } catch (error) {
-    return wildcardMatches(currentUrl.toLowerCase(), normalizedPattern);
-  }
-
-  const host = url.hostname.toLowerCase();
-  const path = `${url.pathname}${url.search}${url.hash}`.toLowerCase();
-  const hostAndPath = `${host}${path}`;
-  const urlWithoutProtocol = currentUrl.replace(/^\w+:\/\//, "").toLowerCase();
-  const patternWithoutProtocol = normalizedPattern.replace(/^\w+:\/\//, "");
-
-  if (!patternWithoutProtocol.includes("/")) {
-    return matchesDomainPattern(host, patternWithoutProtocol);
-  }
-
-  return wildcardMatchesAny(
-    [currentUrl.toLowerCase(), urlWithoutProtocol, hostAndPath],
-    patternWithoutProtocol
-  );
-}
-
-function matchesDomainPattern(host, pattern) {
-  const domain = pattern.split("/")[0].split(":")[0];
-
-  if (!domain) {
-    return false;
-  }
-
-  if (domain.startsWith("*.")) {
-    const suffix = domain.slice(2);
-    return host === suffix || host.endsWith(`.${suffix}`);
-  }
-
-  if (domain.includes("*")) {
-    return wildcardMatchesAny([host], domain);
-  }
-
-  return host === domain || host.endsWith(`.${domain}`);
-}
-
-function wildcardMatchesAny(candidates, pattern) {
-  return candidates.some((candidate) => wildcardMatches(candidate, pattern)) ||
-    (pattern.startsWith("*.") && candidates.some((candidate) => wildcardMatches(candidate, pattern.slice(2))));
-}
-
-function wildcardMatches(candidate, pattern) {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
-  return new RegExp(`^${escaped}$`).test(candidate);
-}
-
-function addElementEnv() {
-  if (tooltipContainer?.isConnected) {
-    return;
-  }
-
-  tooltipContainer = document.createElement("div");
-  tooltipContainer.id = "mousetooltip-container";
-  tooltipContainer.style.cssText = "position: fixed; top: 0; left: 0; z-index: 999999;";
-  document.body.appendChild(tooltipContainer);
-
-  tooltip = tippy(tooltipContainer, {
-    content: "",
-    allowHTML: true,
-    interactive: true,
-    trigger: "manual",
-    hideOnClick: false,
-    theme: "custom",
-    placement: "top-start",
-    followCursor: setting["tooltipPosition"] === "follow",
-    getReferenceClientRect: () => emptyClientRect(),
-  });
-}
-
-function applyStyleSetting() {
-  const fontSize = setting["tooltipFontSize"] || "18";
-  const width = setting["tooltipWidth"] || "300";
-
-  if (!styleElement) {
-    styleElement = document.createElement("style");
-    styleElement.id = "mousetooltip-style";
-    document.head.appendChild(styleElement);
-  }
-
-  styleElement.textContent = `
-    .tippy-box[data-theme~="custom"] {
-      background-color: rgba(0, 0, 0, 0.8);
-      color: white;
-      font-size: ${fontSize}px;
-      max-width: ${width}px;
-      padding: 10px;
-      border-radius: 8px;
-      z-index: 999999;
-    }
-    .tippy-box[data-theme~="custom"] .tippy-content {
-      padding: 0;
-    }
-    .tippy-arrow {
-      color: rgba(0, 0, 0, 0.8);
-    }
-    .tooltip-source {
-      opacity: 0.7;
-      font-size: 0.9em;
-      margin-bottom: 5px;
-    }
-    .tooltip-target {
-      font-weight: bold;
-    }
-    .tooltip-dict {
-      margin-top: 8px;
-      font-size: 0.85em;
-      opacity: 0.8;
-    }
-  `;
-
-  tooltip?.setProps({
-    followCursor: setting["tooltipPosition"] === "follow",
+  return isUrlExcluded(window.location.href, excludeList, (pattern) => {
+    log("URL excluded by pattern:", pattern);
   });
 }
 
@@ -284,7 +143,7 @@ function loadEventListener() {
   eventCleanups.push(() => window.removeEventListener("keydown", handleKeyDown));
   eventCleanups.push(() => window.removeEventListener("keyup", handleKeyUp));
 
-  const debouncedHideAll = debounce(() => hideAll(), 100);
+  const debouncedHideAll = debounce(() => tooltipRenderer.hideAll(), 100);
   window.addEventListener("scroll", debouncedHideAll);
   eventCleanups.push(() => {
     window.removeEventListener("scroll", debouncedHideAll);
@@ -292,11 +151,10 @@ function loadEventListener() {
   });
 
   const handleClick = (e) => {
-    const tippyBox = document.querySelector('.tippy-box[data-theme~="custom"]');
-    if (tippyBox && tippyBox.contains(e.target)) {
+    if (tooltipRenderer.containsTarget(e.target)) {
       return;
     }
-    hideAll();
+    tooltipRenderer.hideAll();
   };
   window.addEventListener("click", handleClick);
   eventCleanups.push(() => window.removeEventListener("click", handleClick));
@@ -315,12 +173,7 @@ function cleanupEventListeners() {
 
 function destroyTooltipRuntime() {
   cleanupEventListeners();
-  tooltip?.destroy();
-  tooltip = null;
-  tooltipContainer?.remove();
-  tooltipContainer = null;
-  styleElement?.remove();
-  styleElement = null;
+  tooltipRenderer.destroy();
   initialized = false;
 }
 
@@ -331,7 +184,7 @@ async function onMouseoverText(e) {
   currentHoverRange = mouseoverRange || null;
 
   if (!currentHoverText || !checkShowTooltip() || isExcluded) {
-    hideAll();
+    tooltipRenderer.hideAll();
     return;
   }
 
@@ -346,7 +199,7 @@ function onMouseLeaveText() {
   currentHoverText = "";
   currentHoverRange = null;
   activeTranslateRequestId += 1;
-  hideAll();
+  tooltipRenderer.hideAll();
 }
 
 async function onSelectionEnd(e) {
@@ -378,12 +231,12 @@ async function translateAndShowTooltip(text, range, requestContext) {
   const cleanText = TextUtil.trimAllSpace(text);
 
   if (!cleanText) {
-    hideAll();
+    tooltipRenderer.hideAll();
     return;
   }
 
-  if (cleanText === prevTooltipText && tooltip?.state?.isVisible) {
-    showTooltip(lastTooltipContent, range);
+  if (cleanText === prevTooltipText && tooltipRenderer.isVisible()) {
+    tooltipRenderer.show(tooltipRenderer.getLastContent(), range);
     return;
   }
 
@@ -394,13 +247,13 @@ async function translateAndShowTooltip(text, range, requestContext) {
   const targetLang = setting["translateTarget"] || "en";
 
   if (sourceLang !== "auto" && isSameLanguage(sourceLang, targetLang)) {
-    hideAll();
+    tooltipRenderer.hideAll();
     return;
   }
 
   const textForTranslation = TextUtil.redactSensitiveText(cleanText);
   if (!textForTranslation || textForTranslation.trim() === "") {
-    hideAll();
+    tooltipRenderer.hideAll();
     return;
   }
 
@@ -412,32 +265,32 @@ async function translateAndShowTooltip(text, range, requestContext) {
     }
 
     if (!result || result.isBroken) {
-      hideAll();
+      tooltipRenderer.hideAll();
       return;
     }
 
     if (result.sourceLang && result.targetLang && isSameLanguage(result.sourceLang, result.targetLang)) {
-      hideAll();
+      tooltipRenderer.hideAll();
       return;
     }
 
     const excludeLangs = setting["langExcludeList"] || [];
     if (result.sourceLang && excludeLangs.includes(result.sourceLang)) {
-      hideAll();
+      tooltipRenderer.hideAll();
       return;
     }
 
     if (!result.targetText || result.targetText.trim() === "") {
-      hideAll();
+      tooltipRenderer.hideAll();
       return;
     }
 
-    const content = buildTooltipContent(result, textForTranslation);
-    showTooltip(content, range);
+    tooltipRenderer.show(buildTooltipContent(result, textForTranslation), range);
   } catch (error) {
-    hideAll();
+    tooltipRenderer.hideAll();
   }
 }
+
 function isCurrentTranslateRequest(requestId, requestContext) {
   if (requestId !== activeTranslateRequestId || isExcluded) {
     return false;
@@ -448,82 +301,6 @@ function isCurrentTranslateRequest(requestId, requestContext) {
   }
 
   return true;
-}
-
-function buildTooltipContent(result, sourceText) {
-  const { targetText, transliteration, dict, targetLang } = result;
-
-  const direction = getRtlDir(targetLang);
-
-  let html = `<div dir="${direction}">`;
-  html += `<div class="tooltip-source">${escapeHtml(sourceText || "")}</div>`;
-  html += `<div class="tooltip-target">${escapeHtml(targetText || sourceText || "")}</div>`;
-
-  if (transliteration) {
-    html += `<div class="tooltip-dict">${escapeHtml(transliteration)}</div>`;
-  }
-
-  if (dict) {
-    html += `<div class="tooltip-dict">${escapeHtml(dict)}</div>`;
-  }
-
-  html += "</div>";
-
-  return html;
-}
-
-function escapeHtml(text) {
-  if (text === undefined || text === null) {
-    return "";
-  }
-  const div = document.createElement("div");
-  div.textContent = String(text);
-  return div.innerHTML;
-}
-
-function showTooltip(content, range) {
-  if (!tooltip || !content) {
-    return;
-  }
-
-  lastTooltipContent = content;
-  tooltip.setContent(content);
-  tooltip.setProps({
-    getReferenceClientRect: () => getRangeRect(range),
-  });
-  tooltip.show();
-}
-function getRangeRect(range) {
-  if (!range) {
-    return emptyClientRect();
-  }
-
-  try {
-    const rect = range.getBoundingClientRect();
-    if (rect && (rect.width || rect.height)) {
-      return rect;
-    }
-
-    const firstRect = range.getClientRects?.()[0];
-    if (firstRect) {
-      return firstRect;
-    }
-  } catch (error) {
-    log("Error getting range rect:", error);
-  }
-
-  return emptyClientRect();
-}
-
-function emptyClientRect() {
-  return {
-    width: 0,
-    height: 0,
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  };
 }
 
 function handleKeyDown(e) {

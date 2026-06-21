@@ -1,4 +1,4 @@
-﻿class BaseTranslator {
+class BaseTranslator {
   static async translate(text, sourceLang, targetLang, settings) {
     try {
       const res = await this.requestTranslate(text, sourceLang, targetLang, settings);

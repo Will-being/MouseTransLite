@@ -1,4 +1,4 @@
-﻿export function extractTextFromRange(range) {
+export function extractTextFromRange(range) {
   if (!range) return "";
   try {
     return range.toString().trim();
